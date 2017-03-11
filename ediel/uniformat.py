@@ -3,6 +3,8 @@ from cached_property import cached_property
 import pytz
 import datetime as dt
 
+from .misc import open_filename
+
 
 class UNIBaseParser:
     def __init__(self, file):
@@ -11,11 +13,11 @@ class UNIBaseParser:
         ----------
         file : str
         """
-        self.filename = file
+        self.file = file
         self.body_start_line = None
         self.body_end_line = None
 
-        with open(file, mode='r') as f:
+        with open_filename(filename=file, mode='r') as f:
             self.raw = list(csv.reader(f, delimiter=";"))
 
         self.dict = self._parse_properties(raw=self.raw)

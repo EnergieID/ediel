@@ -91,7 +91,7 @@ class TwoWireMMRParser(TwoWireParser):
         -------
         pd.DataFrame
         """
-        df = pd.read_csv(self.filename,
+        df = pd.read_csv(self.file,
                          # because C parse does not support skipfooter:
                          engine='python',
                          header=None,
