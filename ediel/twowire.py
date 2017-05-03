@@ -37,7 +37,9 @@ class TwoWireParser(UNIBaseParser):
         pd.Timestamp
         """
         parsed = pd.Timestamp.strptime(date_str + time_str, "%d%m%Y%H:%M")
-        return parsed.tz_localize(self.timezone)
+        datetime = parsed.tz_localize(self.timezone)
+
+        return datetime
 
     def get_timeseries_frame(self):
         """
@@ -84,6 +86,7 @@ class TwoWireMMRParser(TwoWireParser):
         file : str
         """
         super(TwoWireMMRParser, self).__init__(file=file)
+        self.is_long_format = False
 
     def _parse_dataframe(self):
         """
@@ -91,31 +94,53 @@ class TwoWireMMRParser(TwoWireParser):
         -------
         pd.DataFrame
         """
-        df = pd.read_csv(self.file,
-                         # because C parse does not support skipfooter:
-                         engine='python',
-                         header=None,
-                         skiprows=self.body_start_line,
-                         skipfooter=len(self.raw) - self.body_end_line - 1,
-                         sep=";",
-                         decimal=",",
-                         true_values=['yes'],
-                         false_values=['no'],
-                         parse_dates=[[5, 6], [8, 9]],
-                         date_parser=self._date_parser
-                         )
+        def pandas_read(parse_dates, column_names):
+            _df = pd.read_csv(
+                self.file,
+                # because C parse does not support skipfooter:
+                engine='python',
+                header=None,
+                skiprows=self.body_start_line,
+                skipfooter=len(self.raw) - self.body_end_line - 1,
+                sep=";",
+                decimal=",",
+                true_values=['yes'],
+                false_values=['no'],
+                parse_dates=parse_dates,
+                date_parser=self._date_parser
+            )
+            _df.rename(columns=column_names, inplace=True)
+            _df.set_index('Name', inplace=True)
+            return _df
 
-        df.rename(columns={
-            0: 'Name',
-            1: 'Type',
-            2: 'Tariff',
-            3: 'Cumulative',
-            4: 'Unit',
-            '5_6': 'Start',
-            '8_9': 'End'
-        }, inplace=True)
-
-        df.set_index('Name', inplace=True)
+        try:
+            df = pandas_read(
+                parse_dates=[[5, 6], [8, 9]],
+                column_names={
+                    0: 'Name',
+                    1: 'Type',
+                    2: 'Tariff',
+                    3: 'Cumulative',
+                    4: 'Unit',
+                    '5_6': 'Start',
+                    '8_9': 'End'
+                }
+            )
+        except ValueError:
+            df = pandas_read(
+                parse_dates=[[6, 7], [9, 10]],
+                column_names={
+                    0: 'Ean',
+                    1: 'Name',
+                    2: 'Type',
+                    3: 'Tariff',
+                    4: 'Cumulative',
+                    5: 'Unit',
+                    '6_7': 'Start',
+                    '9_10': 'End'
+                }
+            )
+            self.is_long_format = True
 
         return df
 
@@ -131,7 +156,12 @@ class TwoWireMMRParser(TwoWireParser):
         end = df.End.iloc[0]
         index = pd.date_range(start=start, end=end, freq=self.interval)
 
-        vals = df[df.columns[6:]].T.dropna()
+        if not self.is_long_format:
+            vals = df[df.columns[6:]]
+        else:
+            vals = df[df.columns[7:-2]]
+
+        vals = vals.T.dropna()
         vals.index = index
 
         return vals
