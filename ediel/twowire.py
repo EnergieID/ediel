@@ -2,6 +2,7 @@ from cached_property import cached_property
 import pandas as pd
 
 from .uniformat import UNIBaseParser
+from .misc import open_filename
 
 
 class TwoWireParser(UNIBaseParser):
@@ -95,20 +96,21 @@ class TwoWireMMRParser(TwoWireParser):
         pd.DataFrame
         """
         def pandas_read(parse_dates, column_names):
-            _df = pd.read_csv(
-                self.file,
-                # because C parse does not support skipfooter:
-                engine='python',
-                header=None,
-                skiprows=self.body_start_line,
-                skipfooter=len(self.raw) - self.body_end_line - 1,
-                sep=";",
-                decimal=",",
-                true_values=['yes'],
-                false_values=['no'],
-                parse_dates=parse_dates,
-                date_parser=self._date_parser
-            )
+            with open_filename(filename=self.file, mode='r') as f:
+                _df = pd.read_csv(
+                    f,
+                    # because C parse does not support skipfooter:
+                    engine='python',
+                    header=None,
+                    skiprows=self.body_start_line,
+                    skipfooter=len(self.raw) - self.body_end_line - 1,
+                    sep=";",
+                    decimal=",",
+                    true_values=['yes'],
+                    false_values=['no'],
+                    parse_dates=parse_dates,
+                    date_parser=self._date_parser
+                )
             _df.rename(columns=column_names, inplace=True)
             _df.set_index('Name', inplace=True)
             return _df
@@ -144,8 +146,14 @@ class TwoWireMMRParser(TwoWireParser):
 
         return df
 
-    def get_timeseries_frame(self):
+    def get_timeseries_frame(self, allow_duplicate_names=True):
         """
+        Parameters
+        ----------
+        allow_duplicate_names : bool
+            default True
+            if False, only the first occurence of a name is returned
+            
         Returns
         -------
         pd.DataFrame
@@ -160,17 +168,38 @@ class TwoWireMMRParser(TwoWireParser):
             vals = df[df.columns[6:]]
         else:
             vals = df[df.columns[7:-2]]
+            
+        if not allow_duplicate_names:
+            vals = vals.reset_index()
+            vals = vals.drop_duplicates(subset='Name')
+            vals = vals.set_index('Name')
 
-        vals = vals.T.dropna()
+        vals = vals.T
         vals.index = index
 
         return vals
 
-    def get_metadata_frame(self):
+    def get_metadata_frame(self, allow_duplicate_names=True):
         """
+        Parameters
+        ----------
+        allow_duplicate_names : bool
+            default True
+            if False, only the first occurence of a name is returned
+            
         Returns
         -------
         pd.DataFrame
         """
         df = self.get_dataframe()
-        return df[df.columns[:6]].T
+        if not self.is_long_format:
+            meta = df[df.columns[:6]]
+        else:
+            meta = df[df.columns[:7]]
+
+        if not allow_duplicate_names:
+            meta = meta.reset_index()
+            meta = meta.drop_duplicates(subset='Name')
+            meta = meta.set_index('Name')
+
+        return meta.T
