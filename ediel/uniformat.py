@@ -20,6 +20,8 @@ class UNIBaseParser:
 
         with open_filename(filename=file, mode='r') as f:
             self.raw = list(csv.reader(f, delimiter=";"))
+        if len(self.raw) == 0:
+            raise ValueError("Empty CSV-file")
 
         self.dict = self._parse_properties(raw=self.raw)
 
