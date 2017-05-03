@@ -11,7 +11,8 @@ class UNIBaseParser:
         """
         Parameters
         ----------
-        file : str
+        file : str | FileIO | StringIO
+            file path, file or string buffer
         """
         self.file = file
         self.body_start_line = None
