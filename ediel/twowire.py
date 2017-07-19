@@ -175,6 +175,7 @@ class TwoWireMMRParser(TwoWireParser):
             vals = vals.set_index('Name')
 
         vals = vals.T
+        vals.dropna(inplace=True)
         vals.index = index
 
         return vals
