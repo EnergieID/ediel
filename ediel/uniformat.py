@@ -20,8 +20,6 @@ class UNIBaseParser:
 
         with open_filename(filename=file, mode='r') as f:
             self.raw = list(csv.reader(f, delimiter=";"))
-        # filter empty lines
-        self.raw = [line for line in self.raw if len(line) > 0]
         if len(self.raw) == 0:
             raise ValueError("Empty CSV-file")
 
@@ -84,6 +82,8 @@ class UNIBaseParser:
         d = {}
 
         for i, line in enumerate(raw):
+            if len(line) == 0:
+                continue
             key = line[0]
 
             # all keys start and end with square braces
