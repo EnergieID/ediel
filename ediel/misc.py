@@ -22,3 +22,26 @@ class open_filename(object):
             self.fh.seek(0)
 
         return False
+
+def sort_mixed_list(iterable):
+    """
+    Sort a list of strings and other objects:
+    put the strings first and the others last
+
+    Parameters
+    ----------
+    iterable : list
+
+    Returns
+    -------
+    list
+    """
+    strings = []
+    others = []
+    for elem in iterable:
+        if isinstance(elem, str):
+            strings.append(elem)
+        else:
+            others.append(elem)
+    res = strings + others
+    return res
