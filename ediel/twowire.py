@@ -2,7 +2,7 @@ from cached_property import cached_property
 import pandas as pd
 
 from .uniformat import UNIBaseParser
-from .misc import open_filename
+from .misc import open_filename, sort_mixed_list
 
 
 class TwoWireParser(UNIBaseParser):
@@ -22,22 +22,24 @@ class TwoWireParser(UNIBaseParser):
         str
         """
         _format = self.get_property(key='Format')
-        # looks like ['MMR', 'Interval: 5 min']
-        # so we want the second element, last part, and without the space
-        return _format[1].split(': ')[1].replace(' ', '')
+        if isinstance(_format, str):  # this means no interval is specified
+            return 'H'
+        else:
+            # looks like ['MMR', 'Interval: 5 min']
+            # so we want the second element, last part, and without the space
+            return _format[1].split(': ')[1].replace(' ', '')
 
-    def _date_parser(self, date_str, time_str):
+    def _date_parser(self, datetime_str):
         """
         Parameters
         ----------
-        date_str : str
-        time_str : str
+        datetime_str : str
 
         Returns
         -------
         pd.Timestamp
         """
-        parsed = pd.Timestamp.strptime(date_str + time_str, "%d%m%Y%H:%M")
+        parsed = pd.Timestamp.strptime(datetime_str, "%d%m%Y %H:%M")
         datetime = parsed.tz_localize(self.timezone)
 
         return datetime
@@ -117,20 +119,20 @@ class TwoWireMMRParser(TwoWireParser):
 
         try:
             df = pandas_read(
-                parse_dates=[[5, 6], [8, 9]],
+                parse_dates=[5, 7],
                 column_names={
                     0: 'Name',
                     1: 'Type',
                     2: 'Tariff',
                     3: 'Cumulative',
                     4: 'Unit',
-                    '5_6': 'Start',
-                    '8_9': 'End'
+                    5: 'Start',
+                    7: 'End'
                 }
             )
         except ValueError:
             df = pandas_read(
-                parse_dates=[[6, 7], [9, 10]],
+                parse_dates=[6, 8],
                 column_names={
                     0: 'Ean',
                     1: 'Name',
@@ -138,12 +140,14 @@ class TwoWireMMRParser(TwoWireParser):
                     3: 'Tariff',
                     4: 'Cumulative',
                     5: 'Unit',
-                    '6_7': 'Start',
-                    '9_10': 'End'
+                    6: 'Start',
+                    8: 'End'
                 }
             )
             self.is_long_format = True
 
+        sorted_cols = sort_mixed_list(df.columns.tolist())
+        df = df[sorted_cols]
         return df
 
     def get_timeseries_frame(self, allow_duplicate_names=True):
