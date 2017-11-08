@@ -1,3 +1,5 @@
+import pandas as pd
+
 class open_filename(object):
     """
     Context manager that opens a filename and closes it on exit, but does
@@ -45,3 +47,28 @@ def sort_mixed_list(iterable):
             others.append(elem)
     res = strings + others
     return res
+
+def date_range(start=None, end=None, periods=None, **kwargs):
+    """
+    Extension of pandas date range.
+    Can handle start, end AND a number of periods
+
+    Parameters
+    ----------
+    start : pd.Timestamp
+    end : pd.Timestamp
+    periods : int
+    kwargs : kwargs
+
+    Returns
+    -------
+    pd.DatetimeIndex
+    """
+    if start and end and periods:
+        delta = end - start
+        period = delta / (periods-1)
+        dr = pd.date_range(start=start, end=end, freq=period)
+    else:
+        dr = pd.date_range(start=start, end=end, periods=periods, **kwargs)
+
+    return dr

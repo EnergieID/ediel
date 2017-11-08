@@ -2,7 +2,7 @@ from cached_property import cached_property
 import pandas as pd
 
 from .uniformat import UNIBaseParser
-from .misc import open_filename, sort_mixed_list
+from .misc import open_filename, sort_mixed_list, date_range
 
 
 class TwoWireParser(UNIBaseParser):
@@ -23,7 +23,7 @@ class TwoWireParser(UNIBaseParser):
         """
         _format = self.get_property(key='Format')
         if isinstance(_format, str):  # this means no interval is specified
-            return 'H'
+            return None
         else:
             # looks like ['MMR', 'Interval: 5 min']
             # so we want the second element, last part, and without the space
@@ -164,10 +164,6 @@ class TwoWireMMRParser(TwoWireParser):
         """
         df = self.get_dataframe()
 
-        start = df.Start.iloc[0]
-        end = df.End.iloc[0]
-        index = pd.date_range(start=start, end=end, freq=self.interval)
-
         if not self.is_long_format:
             vals = df[df.columns[6:]]
         else:
@@ -180,6 +176,15 @@ class TwoWireMMRParser(TwoWireParser):
 
         vals = vals.T
         vals.dropna(inplace=True)
+
+        start = df.Start.iloc[0]
+        end = df.End.iloc[0]
+        if self.interval is not None:
+            index = date_range(start=start, end=end, freq=self.interval)
+        else:
+            num_periods = len(vals)
+            index = date_range(start=start, end=end, periods=num_periods)
+
         vals.index = index
 
         return vals
