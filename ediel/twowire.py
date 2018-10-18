@@ -10,7 +10,7 @@ class TwoWireParser(UNIBaseParser):
         """
         Parameters
         ----------
-        file : str
+        file : str | FileIO | StringIO
         """
         super(TwoWireParser, self).__init__(file=file)
 
