@@ -5,6 +5,9 @@ import datetime as dt
 
 from .misc import open_filename
 
+class EmptyFileException(Exception):
+    pass
+
 
 class UNIBaseParser:
     def __init__(self, file):
@@ -21,7 +24,7 @@ class UNIBaseParser:
         with open_filename(filename=file, mode='r') as f:
             self.raw = list(csv.reader(f, delimiter=";"))
         if len(self.raw) == 0:
-            raise ValueError("Empty CSV-file")
+            raise EmptyFileException
 
         self.dict = self._parse_properties(raw=self.raw)
 
