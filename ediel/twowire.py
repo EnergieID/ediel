@@ -6,14 +6,6 @@ from .misc import open_filename, sort_mixed_list, date_range
 
 
 class TwoWireParser(UNIBaseParser):
-    def __init__(self, file):
-        """
-        Parameters
-        ----------
-        file : str | FileIO | StringIO
-        """
-        super(TwoWireParser, self).__init__(file=file)
-
     @cached_property
     def interval(self):
         """

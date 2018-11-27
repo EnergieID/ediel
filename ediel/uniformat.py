@@ -2,6 +2,8 @@ import csv
 from cached_property import cached_property
 import pytz
 import datetime as dt
+from typing import Union
+import io
 
 from .misc import open_filename
 
@@ -10,12 +12,9 @@ class EmptyFileException(Exception):
 
 
 class UNIBaseParser:
-    def __init__(self, file):
+    def __init__(self, file: Union[str, io.StringIO, io.FileIO]):
         """
-        Parameters
-        ----------
-        file : str | FileIO | StringIO
-            file path, file or string buffer
+        file can be file path, fileIO or stringIO
         """
         self.file = file
         self.body_start_line = None
