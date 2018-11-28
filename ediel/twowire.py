@@ -1,5 +1,7 @@
 from cached_property import cached_property
 import pandas as pd
+from typing import Union
+import io
 
 from .uniformat import UNIBaseParser
 from .misc import open_filename, sort_mixed_list, date_range
@@ -74,12 +76,7 @@ class TwoWireParser(UNIBaseParser):
 
 
 class TwoWireMMRParser(TwoWireParser):
-    def __init__(self, file):
-        """
-        Parameters
-        ----------
-        file : str
-        """
+    def __init__(self, file: Union[str, io.StringIO, io.FileIO]):
         super(TwoWireMMRParser, self).__init__(file=file)
         self.is_long_format = False
 
