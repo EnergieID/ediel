@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Type
 import re
 
 from .uniformat import UNIBaseParser
@@ -7,6 +7,11 @@ from .misc import open_filename
 from .filename import match_filename
 
 def parse_mig_file(filepath: str) -> 'MigParser':
+    parser_cls = get_mig_parser_cls(filepath=filepath)
+    parser = parser_cls(file=filepath)
+    return parser
+
+def get_mig_parser_cls(filepath: str) -> Type['MigParser']:
     r = match_filename(filename=filepath)
     if not r:
         raise ValueError(f'Not a valid MIG file: {filepath}')
@@ -20,7 +25,7 @@ def parse_mig_file(filepath: str) -> 'MigParser':
         '96': Mig3Export96Parser
     }
     parser = parsers[r['export_no']]
-    return parser(file=filepath)
+    return parser
 
 class MigParser(UNIBaseParser):
     date_columns: List[int]  = NotImplemented
