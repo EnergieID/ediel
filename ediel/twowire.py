@@ -23,21 +23,6 @@ class TwoWireParser(UNIBaseParser):
             # so we want the second element, last part, and without the space
             return _format[1].split(': ')[1].replace(' ', '')
 
-    def _date_parser(self, datetime_str):
-        """
-        Parameters
-        ----------
-        datetime_str : str
-
-        Returns
-        -------
-        pd.Timestamp
-        """
-        parsed = pd.Timestamp.strptime(datetime_str, "%d%m%Y %H:%M")
-        datetime = parsed.tz_localize(self.timezone)
-
-        return datetime
-
     def get_timeseries_frame(self):
         """
         Returns

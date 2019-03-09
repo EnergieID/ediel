@@ -4,6 +4,7 @@ import pytz
 import datetime as dt
 from typing import Union
 import io
+import pandas as pd
 
 from .misc import open_filename
 
@@ -68,6 +69,12 @@ class UNIBaseParser:
         offset_minutes = offset.seconds / 60
         offset_signed = float(sign + str(offset_minutes))
         return pytz.FixedOffset(offset_signed)
+
+    @cached_property
+    def created_on(self) -> pd.Timestamp:
+        co = self.get_property(key='Created on')
+        date_str = ' '.join(co)
+        return self._date_parser(datetime_str=date_str)
 
     def _parse_properties(self, raw):
         """
@@ -159,3 +166,18 @@ class UNIBaseParser:
         NotImplementedError
         """
         raise NotImplementedError('Method needs to be implemented by subclass')
+
+    def _date_parser(self, datetime_str):
+        """
+        Parameters
+        ----------
+        datetime_str : str
+
+        Returns
+        -------
+        pd.Timestamp
+        """
+        parsed = pd.Timestamp.strptime(datetime_str, "%d%m%Y %H:%M")
+        datetime = parsed.tz_localize(self.timezone)
+
+        return datetime
