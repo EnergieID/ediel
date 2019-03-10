@@ -214,8 +214,8 @@ class Mig3Export94Parser(MigParser):
 
     def get_timeseries_frame(self) -> pd.DataFrame:
         df = self.get_dataframe()
-        values = df[df['calculated'] & (df['Unit'] == 'KWH')].groupby(['AccessEAN', 'Start', 'End']).Value.sum()
-        values = values.unstack(level=0)
+        values = df[df['calculated'] & (df['Unit'] == 'KWH')].groupby(['AccessEAN', 'Description', 'Start', 'End']).Value.sum()
+        values = values.unstack(level=[0,1])
 
         return values
 
