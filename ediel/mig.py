@@ -87,15 +87,22 @@ class Mig3Export91Parser(MigParser):
             start_slice = 9 + step - 1
 
             values = pd.Series(data=row[start_slice:start_slice + len(index) * step:step].values, index=index)
-            meta = (row['AccessEAN'], row['Description'], row['EnergyType'], 'value')
-            series.append(values)
-            headers.append(meta)
+            meta_v = (row['AccessEAN'], row['Description'], row['EnergyType'], 'value')
 
             quality_codes = pd.Series(data=row[start_slice + 100:start_slice + 100 + len(index) * step: step].values,
                                       index=index)
-            meta = (row['AccessEAN'], row['Description'], row['EnergyType'], 'quality')
+            meta_q = (row['AccessEAN'], row['Description'], row['EnergyType'], 'quality')
+
+            # if the quality code equals "?", we want the value to result in NaN
+            # by multiplying it with float('NaN')
+            # if the quality code is anything else, we retain it by multiplying it with 1
+            quality_multiplier = quality_codes.map(lambda x: float('NaN') if x=='?' else 1)
+            values = values * quality_multiplier
+
+            series.append(values)
+            headers.append(meta_v)
             series.append(quality_codes)
-            headers.append(meta)
+            headers.append(meta_q)
 
         df_t = pd.concat(series, axis=1)
         df_t.columns = pd.MultiIndex.from_tuples(headers)
