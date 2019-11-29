@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import List, Dict, Type
+from typing import List, Dict, Type, Iterator
 import re
 
 from .uniformat import UNIBaseParser
@@ -76,43 +76,48 @@ class Mig3Export91Parser(MigParser):
     def get_timeseries_frame(self) -> pd.DataFrame:
         df = self.get_dataframe()
 
-        series = []
-        headers = []
-
-        for _, row in df.iterrows():
-            interval = row['Interval']
-
-            index = pd.date_range(start=row.Start, end=row.End, freq=f'{interval}min', closed='right')
-            step = int(5 - (60 / interval))
-            start_slice = 9 + step - 1
-
-            values = pd.Series(data=row[start_slice:start_slice + len(index) * step:step].values, index=index)
-            meta_v = (row['AccessEAN'], row['Description'], row['EnergyType'], 'value')
-
-            quality_codes = pd.Series(data=row[start_slice + 100:start_slice + 100 + len(index) * step: step].values,
-                                      index=index)
-            meta_q = (row['AccessEAN'], row['Description'], row['EnergyType'], 'quality')
-
-            # if the quality code equals "?", we want the value to result in NaN
-            # by multiplying it with float('NaN')
-            # if the quality code is anything else, we retain it by multiplying it with 1
-            quality_multiplier = quality_codes.map(lambda x: float('NaN') if x=='?' else 1)
-            values = values * quality_multiplier
-
-            series.append(values)
-            headers.append(meta_v)
-            series.append(quality_codes)
-            headers.append(meta_q)
-
-        df_t = pd.concat(series, axis=1)
-        df_t.columns = pd.MultiIndex.from_tuples(headers)
+        def parse_columns(frame: pd.DataFrame) -> Iterator[pd.DataFrame]:
+            for _, group in frame.groupby(['AccessEAN', 'EnergyType']):
+                parsed_rows = (self._parse_row_to_timeseries(row) for _, row in group.iterrows())
+                column = pd.concat(parsed_rows)
+                yield column
+        columns = parse_columns(frame=df)
+        df_t = pd.concat(columns, axis=1)
         return df_t
+
+    @staticmethod
+    def _parse_row_to_timeseries(row: pd.Series) -> pd.DataFrame:
+        interval = row['Interval']
+
+        index = pd.date_range(start=row.Start, end=row.End, freq=f'{interval}min', closed='right')
+        step = int(5 - (60 / interval))
+        start_slice = 9 + step - 1
+
+        values = pd.Series(data=row[start_slice:start_slice + len(index) * step:step].values, index=index)
+        meta_v = (row['AccessEAN'], row['Description'], row['EnergyType'], 'value')
+
+        quality_codes = pd.Series(data=row[start_slice + 100:start_slice + 100 + len(index) * step: step].values,
+                                  index=index)
+        meta_q = (row['AccessEAN'], row['Description'], row['EnergyType'], 'quality')
+
+        # if the quality code equals "?", we want the value to result in NaN
+        # by multiplying it with float('NaN')
+        # if the quality code is anything else, we retain it by multiplying it with 1
+        quality_multiplier = quality_codes.map(lambda x: float('NaN') if x == '?' else 1)
+        values = values * quality_multiplier
+
+        ts = pd.concat([values, quality_codes], axis=1)
+        ts.columns = pd.MultiIndex.from_tuples([meta_v, meta_q])
+        return ts
+
 
 class Mig3Export92Parser(Mig3Export91Parser):
     pass
 
+
 class Mig3Export93Parser(Mig3Export91Parser):
     pass
+
 
 class Mig3Export94Parser(MigParser):
     calculated_columns = [
