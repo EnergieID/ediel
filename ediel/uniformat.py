@@ -8,7 +8,11 @@ import pandas as pd
 
 from .misc import open_filename
 
+
 class EmptyFileException(Exception):
+    pass
+
+class ParserError(Exception):
     pass
 
 
@@ -18,8 +22,6 @@ class UNIBaseParser:
         file can be file path, fileIO or stringIO
         """
         self.file = file
-        self.body_start_line = None
-        self.body_end_line = None
 
         with open_filename(filename=file, mode='r') as f:
             self.raw = list(csv.reader(f, delimiter=";"))
@@ -27,6 +29,12 @@ class UNIBaseParser:
             raise EmptyFileException
 
         self.dict = self._parse_properties(raw=self.raw)
+
+        try:
+            self.body_start_line = self.dict['Body Start']
+            self.body_end_line = self.dict['Body End']
+        except KeyError:
+            raise ParserError('Body is not clearly marked by Body Start and Body End')
 
         self.df = None
 
@@ -102,10 +110,10 @@ class UNIBaseParser:
                 key = key.strip("[]")
 
             if key == "Body Start":
-                self.body_start_line = i + 1
+                d.update({key: i + 1})
                 continue
             elif key == "Body End":
-                self.body_end_line = i - 1
+                d.update({key: i - 1})
                 continue
 
             # get everything after the key, but no empty strings
