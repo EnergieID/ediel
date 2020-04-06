@@ -7,7 +7,25 @@ from .uniformat import UNIBaseParser
 from .misc import open_filename, sort_mixed_list, date_range
 
 
+def get_parser(path_or_buff: Union[str, io.StringIO, io.FileIO]) -> 'TwoWireParser':
+    pre_parser = TwoWireParser(path_or_buff)
+    if pre_parser.format == 'MMR':
+        return TwoWireMMRParser(path_or_buff)
+    elif pre_parser.format == 'AMR':
+        return TwoWireAMRParser(path_or_buff)
+    else:
+        raise ValueError(f'Unknown file format: {pre_parser.format}')
+
+
 class TwoWireParser(UNIBaseParser):
+    @cached_property
+    def format(self) -> str:
+        _format = self.get_property(key='Format')
+        if isinstance(_format, str):
+            return _format
+        else:
+            return _format[0]
+
     @cached_property
     def interval(self):
         """
