@@ -94,11 +94,13 @@ class Mig3Export91Parser(MigParser):
         start_slice = 9 + step - 1
 
         values = pd.Series(data=row[start_slice:start_slice + len(index) * step:step].values, index=index)
-        meta_v = (row['AccessEAN'], row['Description'], row['EnergyType'], 'value')
+        meta_v = (row['AccessEAN'], row['Description'], row['EnergyType'],
+                  row['Unit'], 'value')
 
         quality_codes = pd.Series(data=row[start_slice + 100:start_slice + 100 + len(index) * step: step].values,
                                   index=index)
-        meta_q = (row['AccessEAN'], row['Description'], row['EnergyType'], 'quality')
+        meta_q = (row['AccessEAN'], row['Description'], row['EnergyType'],
+                  row['Unit'], 'quality')
 
         # if the quality code equals "?", we want the value to result in NaN
         # by multiplying it with float('NaN')
