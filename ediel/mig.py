@@ -77,7 +77,7 @@ class Mig3Export91Parser(MigParser):
         df = self.get_dataframe()
 
         def parse_columns(frame: pd.DataFrame) -> Iterator[pd.DataFrame]:
-            for _, group in frame.groupby(['AccessEAN', 'EnergyType']):
+            for _, group in frame.groupby(['AccessEAN', 'EnergyType', 'Unit']):
                 parsed_rows = (self._parse_row_to_timeseries(row) for _, row in group.iterrows())
                 column = pd.concat(parsed_rows)
                 yield column
