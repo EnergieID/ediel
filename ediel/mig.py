@@ -94,13 +94,20 @@ class Mig3Export91Parser(MigParser):
         start_slice = 9 + step - 1
 
         values = pd.Series(data=row[start_slice:start_slice + len(index) * step:step].values, index=index)
-        meta_v = (row['AccessEAN'], row['Description'], row['EnergyType'],
-                  row['Unit'], 'value')
+        meta_v = (
+            row['AccessEAN'], row['Description'], row['Serial'],
+            row['Direction'], row['CounterID'], row['EnergyType'],
+            row['Unit'], 'value')
 
         quality_codes = pd.Series(data=row[start_slice + 100:start_slice + 100 + len(index) * step: step].values,
                                   index=index)
-        meta_q = (row['AccessEAN'], row['Description'], row['EnergyType'],
-                  row['Unit'], 'quality')
+        meta_q = (
+            row['AccessEAN'], row['Description'], row['Serial'],
+            row['Direction'], row['CounterID'], row['EnergyType'],
+            row['Unit'], 'quality')
+
+        meta_names = ['AccessEAN', 'Description', 'Serial', 'CounterID',
+                      'Direction', 'EnergyType', 'Unit', None]
 
         # if the quality code equals "?", we want the value to result in NaN
         # by multiplying it with float('NaN')
@@ -109,7 +116,7 @@ class Mig3Export91Parser(MigParser):
         values = values * quality_multiplier
 
         ts = pd.concat([values, quality_codes], axis=1)
-        ts.columns = pd.MultiIndex.from_tuples([meta_v, meta_q])
+        ts.columns = pd.MultiIndex.from_tuples([meta_v, meta_q], names=meta_names)
         return ts
 
 
@@ -227,11 +234,8 @@ class Mig3Export94Parser(MigParser):
             return super(Mig3Export94Parser, self)._date_parser(datetime_str=datetime_str)
 
     def get_timeseries_frame(self) -> pd.DataFrame:
-        df = self.get_dataframe()
-        values = df[df['calculated'] & (df['Unit'] == 'KWH')].groupby(['AccessEAN', 'Description', 'Start', 'End']).Value.sum()
-        values = values.unstack(level=[0,1])
-
-        return values
+        raise NotImplementedError('No timeseries method implemented for MMR '
+                                  'and YRM metering data')
 
 class Mig3Export95Parser(MigParser):
     date_columns = [0, 1]
