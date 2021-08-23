@@ -2,7 +2,7 @@ import csv
 from cached_property import cached_property
 import pytz
 import datetime as dt
-from typing import Union
+from typing import Union, Optional
 import io
 import pandas as pd
 
@@ -17,11 +17,13 @@ class ParserError(Exception):
 
 
 class UNIBaseParser:
-    def __init__(self, file: Union[str, io.StringIO, io.FileIO]):
+    def __init__(self, file: Union[str, io.StringIO, io.FileIO],
+                 file_name: Optional[str] = None):
         """
         file can be file path, fileIO or stringIO
         """
         self.file = file
+        self.file_name = file_name
 
         with open_filename(filename=file, mode='r') as f:
             self.raw = list(csv.reader(f, delimiter=";"))
