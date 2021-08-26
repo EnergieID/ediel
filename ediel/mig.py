@@ -1,3 +1,5 @@
+import functools
+
 import pandas as pd
 from typing import List, Dict, Type, Iterator
 import re
@@ -73,6 +75,7 @@ class Mig3Export91Parser(MigParser):
         216: 'RequestReceiverRef'
     }
 
+    @functools.lru_cache(maxsize=128, typed=False)
     def get_timeseries_frame(self) -> pd.DataFrame:
         df = self.get_dataframe()
 
@@ -106,8 +109,8 @@ class Mig3Export91Parser(MigParser):
             row['Direction'], row['CounterID'], row['EnergyType'],
             row['Unit'], 'quality')
 
-        meta_names = ['AccessEAN', 'Description', 'Serial', 'CounterID',
-                      'Direction', 'EnergyType', 'Unit', None]
+        meta_names = ['AccessEAN', 'Description', 'Serial', 'Direction',
+                      'CounterID','EnergyType', 'Unit', None]
 
         # if the quality code equals "?", we want the value to result in NaN
         # by multiplying it with float('NaN')

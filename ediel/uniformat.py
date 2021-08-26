@@ -49,17 +49,18 @@ class UNIBaseParser:
         """
         return set(self.dict.keys())
 
-    def get_property(self, key):
+    def get_property(self, key, default=None):
         """
         Parameters
         ----------
         key : str
+        default : str | list(str) | None
 
         Returns
         -------
         str | list(str) | None
         """
-        return self.dict.get(key)
+        return self.dict.get(key, default)
 
     @cached_property
     def timezone(self):
