@@ -50,6 +50,8 @@ class MigParser(UNIBaseParser):
         if 'Description' in df.columns:
             df['Description'] = df['Description'].str.strip(' ')
 
+        df.drop_duplicates(inplace=True)
+
         return df
 
 
@@ -87,7 +89,7 @@ class Mig3Export91Parser(MigParser):
                 column = pd.concat(parsed_rows)
                 yield column
         columns = parse_columns(frame=df)
-        df_t = pd.concat(columns)
+        df_t = pd.concat(columns, axis=1)
         return df_t
 
     @staticmethod
