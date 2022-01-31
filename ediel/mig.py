@@ -87,14 +87,15 @@ class Mig3Export91Parser(MigParser):
                 column = pd.concat(parsed_rows)
                 yield column
         columns = parse_columns(frame=df)
-        df_t = pd.concat(columns, axis=1)
+        df_t = pd.concat(columns)
         return df_t
 
     @staticmethod
     def _parse_row_to_timeseries(row: pd.Series) -> pd.DataFrame:
         interval = row['Interval']
 
-        index = pd.date_range(start=row.Start, end=row.End, freq=f'{interval}min', closed='right')
+        index = pd.date_range(start=row.Start, end=row.End,
+                              freq=f'{interval}min', inclusive='right')
         step = int(5 - (60 / interval))
         start_slice = 9 + step - 1
 
