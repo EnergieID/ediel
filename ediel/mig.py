@@ -86,6 +86,9 @@ class Mig3Export91Parser(MigParser):
                 'AccessEAN', 'EnergyType', 'Unit', 'Serial'
             ], dropna=False):
                 parsed_rows = (self._parse_row_to_timeseries(row) for _, row in group.iterrows())
+                parsed_rows = [row for row in parsed_rows if not row.empty]
+                if len(parsed_rows) == 0:
+                    continue
                 column = pd.concat(parsed_rows)
                 yield column
         columns = parse_columns(frame=df)
@@ -95,7 +98,8 @@ class Mig3Export91Parser(MigParser):
     @staticmethod
     def _parse_row_to_timeseries(row: pd.Series) -> pd.DataFrame:
         interval = row['Interval']
-
+        if pd.isna(interval):
+            return pd.DataFrame()
         index = pd.date_range(start=row.Start, end=row.End,
                               freq=f'{interval}min', inclusive='right')
         step = int(5 - (60 / interval))

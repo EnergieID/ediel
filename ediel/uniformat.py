@@ -179,7 +179,10 @@ class UNIBaseParser:
         raise NotImplementedError('Method needs to be implemented by subclass')
 
     def _date_parser(self, datetime_str: str) -> pd.Timestamp:
-        parsed = pd.to_datetime(datetime_str, format="%d%m%Y %H:%M")
+        try:
+            parsed = pd.to_datetime(datetime_str, format="%d%m%Y %H:%M")
+        except ValueError:
+            return pd.NaT
         datetime = parsed.tz_localize(self.timezone)
 
         return datetime
