@@ -78,14 +78,17 @@ class Mig3Export91Parser(MigParser):
     }
 
     @functools.lru_cache(maxsize=128, typed=False)
-    def get_timeseries_frame(self) -> pd.DataFrame:
+    def get_timeseries_frame(self, index_shift: str = 'right') -> pd.DataFrame:
         df = self.get_dataframe()
 
         def parse_columns(frame: pd.DataFrame) -> Iterator[pd.DataFrame]:
             for _, group in frame.groupby([
                 'AccessEAN', 'EnergyType', 'Unit', 'Serial'
             ], dropna=False):
-                parsed_rows = (self._parse_row_to_timeseries(row) for _, row in group.iterrows())
+                parsed_rows = (self._parse_row_to_timeseries(
+                    row,
+                    index_shift=index_shift)
+                for _, row in group.iterrows())
                 parsed_rows = [row for row in parsed_rows if not row.empty]
                 if len(parsed_rows) == 0:
                     continue
@@ -96,12 +99,13 @@ class Mig3Export91Parser(MigParser):
         return df_t
 
     @staticmethod
-    def _parse_row_to_timeseries(row: pd.Series) -> pd.DataFrame:
+    def _parse_row_to_timeseries(
+            row: pd.Series, index_shift: str = "right") -> pd.DataFrame:
         interval = row['Interval']
         if pd.isna(interval):
             return pd.DataFrame()
         index = pd.date_range(start=row.Start, end=row.End,
-                              freq=f'{interval}min', inclusive='right')
+                              freq=f'{interval}min', inclusive=index_shift)
         step = int(5 - (60 / interval))
         start_slice = 9 + step - 1
 
