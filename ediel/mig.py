@@ -44,7 +44,8 @@ class MigParser(UNIBaseParser):
                 parse_dates=self.date_columns,
                 date_parser=self._date_parser,
                 decimal=',',
-                skipfooter=len(self.raw) - self.body_end_line - 1
+                skipfooter=len(self.raw) - self.body_end_line - 1,
+                on_bad_lines='skip'
             )
         df.rename(columns=self.column_names, inplace=True)
         if 'Description' in df.columns:
