@@ -18,7 +18,7 @@ class ParserError(Exception):
 
 class UNIBaseParser:
     def __init__(self, file: Union[str, io.StringIO, io.FileIO],
-                 file_name: Optional[str] = None):
+                 file_name: Optional[str] = None, remove_contract_info_lines: bool = False):
         """
         file can be file path, fileIO or stringIO
         """
@@ -26,7 +26,19 @@ class UNIBaseParser:
         self.file_name = file_name
 
         with open_filename(filename=file, mode='r') as f:
-            self.raw = list(csv.reader(f, delimiter=";"))
+            raw = list(csv.reader(f, delimiter=";"))
+
+        body_lines_removed = 0
+        if remove_contract_info_lines:
+            new_raw = []
+            for line in raw:
+                if 'CONTRACT-INFO' in line:
+                    body_lines_removed += 1
+                    continue
+                new_raw.append(line)
+        self.raw = new_raw if remove_contract_info_lines else raw
+        self.strio = io.StringIO('\n'.join(";".join(x) for x in self.raw))
+
         if len(self.raw) == 0:
             raise EmptyFileException
 

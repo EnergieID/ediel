@@ -34,7 +34,7 @@ class MigParser(UNIBaseParser):
     column_names: Dict = NotImplemented
 
     def _parse_dataframe(self) -> pd.DataFrame:
-        with open_filename(filename=self.file, mode='r') as f:
+        with open_filename(filename=self.strio, mode='r') as f:
             df = pd.read_csv(
                 filepath_or_buffer=f,
                 sep=';',
