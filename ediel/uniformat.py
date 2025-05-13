@@ -1,43 +1,57 @@
+"""Base class for parsing UNI files."""
+
 import csv
-from cached_property import cached_property
-import pytz
 import datetime as dt
-from typing import Union, Optional
 import io
+from typing import Optional, Union
+
 import pandas as pd
+import pytz
+from cached_property import cached_property
 
 from .misc import open_filename
 
 
 class EmptyFileException(Exception):
+    """Exception raised when the file is empty."""
+
     pass
 
+
 class ParserError(Exception):
+    """Exception raised when the parser encounters an error."""
+
     pass
 
 
 class UNIBaseParser:
-    def __init__(self, file: Union[str, io.StringIO, io.FileIO],
-                 file_name: Optional[str] = None, remove_contract_info_lines: bool = False):
+    """Base class for parsing UNI files."""
+
+    def __init__(
+        self,
+        file: Union[str, io.StringIO, io.FileIO],
+        file_name: Optional[str] = None,
+        remove_contract_info_lines: bool = False,
+    ):
         """
         file can be file path, fileIO or stringIO
         """
         self.file = file
         self.file_name = file_name
 
-        with open_filename(filename=file, mode='r') as f:
+        with open_filename(filename=file, mode="r") as f:
             raw = list(csv.reader(f, delimiter=";"))
 
         body_lines_removed = 0
         if remove_contract_info_lines:
             new_raw = []
             for line in raw:
-                if 'CONTRACT-INFO' in line:
+                if "CONTRACT-INFO" in line:
                     body_lines_removed += 1
                     continue
                 new_raw.append(line)
         self.raw = new_raw if remove_contract_info_lines else raw
-        self.strio = io.StringIO('\n'.join(";".join(x) for x in self.raw))
+        self.strio = io.StringIO("\n".join(";".join(x) for x in self.raw))
 
         if len(self.raw) == 0:
             raise EmptyFileException
@@ -45,10 +59,12 @@ class UNIBaseParser:
         self.dict = self._parse_properties(raw=self.raw)
 
         try:
-            self.body_start_line = self.dict['Body Start']
-            self.body_end_line = self.dict['Body End']
-        except KeyError:
-            raise ParserError('Body is not clearly marked by Body Start and Body End')
+            self.body_start_line = self.dict["Body Start"]
+            self.body_end_line = self.dict["Body End"]
+        except KeyError as e:
+            raise ParserError(
+                "Body is not clearly marked by Body Start and Body End"
+            ) from e
 
         self.df = None
 
@@ -95,8 +111,9 @@ class UNIBaseParser:
 
     @cached_property
     def created_on(self) -> pd.Timestamp:
-        co = self.get_property(key='Created on')
-        date_str = ' '.join(co)
+        """Get the creation date of the file."""
+        co = self.get_property(key="Created on")
+        date_str = " ".join(co)
         return self._date_parser(datetime_str=date_str)
 
     def _parse_properties(self, raw):
@@ -119,7 +136,7 @@ class UNIBaseParser:
             key = line[0]
 
             # all keys start and end with square braces
-            if not key.startswith('['):
+            if not key.startswith("["):
                 continue  # skip this line
             else:
                 key = key.strip("[]")
@@ -132,7 +149,7 @@ class UNIBaseParser:
                 continue
 
             # get everything after the key, but no empty strings
-            value = [elem for elem in line[1:] if elem != '']
+            value = [elem for elem in line[1:] if elem != ""]
 
             if len(value) == 1:
                 value = value[0]
@@ -164,7 +181,7 @@ class UNIBaseParser:
         ------
         NotImplementedError
         """
-        raise NotImplementedError('Method needs to be implemented by subclass')
+        raise NotImplementedError("Method needs to be implemented by subclass")
 
     def get_metadata_frame(self):
         """
@@ -176,7 +193,7 @@ class UNIBaseParser:
         ------
         NotImplementedError
         """
-        raise NotImplementedError('Method needs to be implemented by subclass')
+        raise NotImplementedError("Method needs to be implemented by subclass")
 
     def _parse_dataframe(self):
         """
@@ -188,7 +205,7 @@ class UNIBaseParser:
         ------
         NotImplementedError
         """
-        raise NotImplementedError('Method needs to be implemented by subclass')
+        raise NotImplementedError("Method needs to be implemented by subclass")
 
     def _date_parser(self, datetime_str: str) -> pd.Timestamp:
         try:

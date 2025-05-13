@@ -1,5 +1,13 @@
+"""Init file for ediel package."""
+
+from . import filename, mig
+from .twowire import TwoWireMMRParser, TwoWireParser
 from .uniformat import UNIBaseParser
-from .twowire import TwoWireParser, TwoWireMMRParser
-from . import filename
-from . import mig
-from .ediel import __version__
+
+__all__ = [
+    "filename",
+    "mig",
+    "TwoWireMMRParser",
+    "TwoWireParser",
+    "UNIBaseParser",
+]

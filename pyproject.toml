@@ -1,0 +1,18 @@
+[project]
+name = "ediel"
+version = "0.0.34"
+authors = [
+    { name = "Jan Pecinovsky", email = "jan@energieid.be" }
+]
+description = "Parsers for Energie Data Files"
+readme = "README.md"
+dependencies = [
+    "cached-property>=2.0.1",
+    "pandas>=2.0.3",
+]
+requires-python = ">=3.8"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=3.5.0",
+]

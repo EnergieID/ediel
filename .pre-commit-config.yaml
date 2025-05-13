@@ -1,0 +1,53 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.11.9
+  hooks:
+    # Run the linter.
+    - id: ruff
+      types_or: [ python, pyi ]
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
+      types_or: [ python, pyi ]
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+
+-   repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.7.3
+    hooks:
+    -   id: uv-export
+        args:
+          - --no-hashes
+          - --output-file=requirements.txt
+          - --no-dev
+    -   id: uv-lock
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.19.1
+    hooks:
+    -   id: pyupgrade
+
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+    -   id: isort
+        args: [ "--profile", "black" ]  # Optional: Use Black-compatible sorting
+
+- repo: local
+  hooks:
+    - id: clear-notebooks
+      name: Clear Jupyter Notebook outputs
+      entry: jupyter nbconvert --clear-output --inplace
+      additional_dependencies: [jupyter, nbconvert]
+      language: python
+      pass_filenames: true
+      files: \.ipynb$

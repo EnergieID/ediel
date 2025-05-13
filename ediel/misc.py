@@ -1,14 +1,18 @@
+"""Miscellaneous functions for ediel package"""
+
 import pandas as pd
 
-class open_filename(object):
+
+class open_filename:  # pylint: disable=invalid-name
     """
     Context manager that opens a filename and closes it on exit, but does
     nothing for file-like objects.
     """
+
     def __init__(self, filename, *args, **kwargs):
-        self.closing = kwargs.pop('closing', False)
+        self.closing = kwargs.pop("closing", False)
         if isinstance(filename, str):
-            self.fh = open(filename, *args, **kwargs)
+            self.fh = open(filename, *args, **kwargs)  # pylint: disable=consider-using-with,unspecified-encoding
             self.closing = True
         else:
             self.fh = filename
@@ -24,6 +28,7 @@ class open_filename(object):
             self.fh.seek(0)
 
         return False
+
 
 def sort_mixed_list(iterable):
     """
@@ -48,6 +53,7 @@ def sort_mixed_list(iterable):
     res = strings + others
     return res
 
+
 def date_range(start=None, end=None, periods=None, **kwargs):
     """
     Extension of pandas date range.
@@ -66,7 +72,7 @@ def date_range(start=None, end=None, periods=None, **kwargs):
     """
     if start and end and periods:
         delta = end - start
-        period = delta / (periods-1)
+        period = delta / (periods - 1)
         dr = pd.date_range(start=start, end=end, freq=period)
     else:
         dr = pd.date_range(start=start, end=end, periods=periods, **kwargs)

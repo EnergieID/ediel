@@ -4,9 +4,10 @@ Module to do MIG filename parsing and regex matching
 
 import glob
 import re
-from typing import Optional, Iterator
+from typing import Iterator, Optional
 
-NPS_PATTERN = '(?P<path>(?:.*\/)?(?P<filename>(?P<sender>[0-9]{13})\.(?P<receiver>[0-9]{13})\.(?P<sequence>[0-9]*)\.(?P<export>EXPORT(?P<export_no>[0-9]{2})[^\.]*)\.(?P<mig>MIG[^\.]*)\.csv))'
+NPS_PATTERN = r"(?P<path>(?:.*\/)?(?P<filename>(?P<sender>[0-9]{13})\.(?P<receiver>[0-9]{13})\.(?P<sequence>[0-9]*)\.(?P<export>EXPORT(?P<export_no>[0-9]{2})[^\.]*)\.(?P<mig>MIG[^\.]*)\.csv))"  # pylint: disable=C0301 noqa: E501
+
 
 def match_filename(filename: str) -> Optional[dict]:
     """
@@ -25,8 +26,7 @@ def match_filename(filename: str) -> Optional[dict]:
     r = re.match(string=filename, pattern=NPS_PATTERN, flags=re.I)
     if r:
         return r.groupdict()
-    else:
-        return None
+    return None
 
 
 def find_files(pathname: str) -> Iterator[dict]:
@@ -42,7 +42,7 @@ def find_files(pathname: str) -> Iterator[dict]:
     -------
     dict
     """
-    for filename in glob.iglob(f'{pathname}/*'):
+    for filename in glob.iglob(f"{pathname}/*"):
         r = match_filename(filename=filename)
         if r:
             yield r
