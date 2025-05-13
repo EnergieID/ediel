@@ -15,17 +15,15 @@ from .misc import open_filename
 class EmptyFileException(Exception):
     """Exception raised when the file is empty."""
 
-    pass
-
 
 class ParserError(Exception):
     """Exception raised when the parser encounters an error."""
 
-    pass
-
 
 class UNIBaseParser:
     """Base class for parsing UNI files."""
+
+    date_format = "%d%m%Y %H:%M"
 
     def __init__(
         self,
@@ -114,7 +112,11 @@ class UNIBaseParser:
         """Get the creation date of the file."""
         co = self.get_property(key="Created on")
         date_str = " ".join(co)
-        return self._date_parser(datetime_str=date_str)
+        if len(date_str) == 0:
+            return pd.NaT
+        created_on = pd.to_datetime(date_str, format=self.date_format)
+        created_on = created_on.tz_localize(self.timezone)
+        return created_on
 
     def _parse_properties(self, raw):
         """

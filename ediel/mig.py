@@ -41,6 +41,7 @@ class MigParser(UNIBaseParser):
 
     date_columns: List[int] = NotImplemented
     column_names: Dict = NotImplemented
+    dtypes: Dict = NotImplemented
 
     def _parse_dataframe(self) -> pd.DataFrame:
         with open_filename(filename=self.strio, mode="r") as f:
@@ -51,14 +52,16 @@ class MigParser(UNIBaseParser):
                 engine="python",
                 skiprows=self.body_start_line,
                 parse_dates=self.date_columns,
-                date_parser=self._date_parser,
                 decimal=",",
                 skipfooter=len(self.raw) - self.body_end_line - 1,
                 on_bad_lines="skip",
-            )
-        df.rename(columns=self.column_names, inplace=True)
+                date_format=self.date_format,
+                dtype=self.dtypes,
+            ).rename(columns=self.column_names)
         if "Description" in df.columns:
             df["Description"] = df["Description"].str.strip(" ")
+        df["Start"] = df["Start"].dt.tz_localize(self.timezone)
+        df["End"] = df["End"].dt.tz_localize(self.timezone)
 
         df.drop_duplicates(inplace=True)
 
@@ -98,13 +101,22 @@ class Mig3Export91Parser(MigParser):
         216: "RequestReceiverRef",
     }
 
+    dtypes = {}
+    for i in range(4, 9):
+        dtypes[i] = "category"
+    for i in range(109, 217):
+        dtypes[i] = "category"
+    dtypes[209] = int
+
     @functools.lru_cache(maxsize=128, typed=False)
     def get_timeseries_frame(self, index_shift: str = "right") -> pd.DataFrame:
         df = self.get_dataframe()
 
         def parse_columns(frame: pd.DataFrame) -> Iterator[pd.DataFrame]:
             for _, group in frame.groupby(
-                ["AccessEAN", "EnergyType", "Unit", "Serial"], dropna=False
+                ["AccessEAN", "EnergyType", "Unit", "Serial"],
+                dropna=False,
+                observed=True,
             ):
                 parsed_rows = (
                     self._parse_row_to_timeseries(row, index_shift=index_shift)
